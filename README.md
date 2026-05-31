@@ -3,6 +3,8 @@
 **Aplikasi Pembantu Penyelesaian Tugas yang Terintegrasi dengan Teknik Pomodoro**
 
 [Demo Video LearnCore](https://drive.google.com/file/d/1LL6XhwTj5TjlWiqS5ulSijIbbw9QqL8M/view?usp=drivesdk)
+
+
 [Laporan](https://docs.google.com/document/d/1HCo1CGuDq7qwgjyyX_Im1n3qjY29csoU1gaG1s59Xo4/edit?tab=t.0)
 
 > Proyek IoT untuk mata kuliah **Komputasi Pervasif (IF25-40311)**  
