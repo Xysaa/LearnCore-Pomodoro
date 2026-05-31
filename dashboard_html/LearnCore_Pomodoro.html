@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>LearnCore — Pomodoro</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+:root{
+  --bg:#080C10;--s1:#0F1419;--s2:#161C24;--s3:#1E2730;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.12);
+  --t1:#E8EDF2;--t2:#8A97A8;--t3:#4A5568;
+  --focus:#00D4AA;--fg:rgba(0,212,170,.1);--fb:rgba(0,212,170,.22);
+  --rest:#6C8EF5;--rg:rgba(108,142,245,.1);--rb:rgba(108,142,245,.22);
+  --warn:#F5A623;--wg:rgba(245,166,35,.1);--wb:rgba(245,166,35,.22);
+  --err:#F5523C;--eg:rgba(245,82,60,.1);--eb:rgba(245,82,60,.22);
+  --sh:rgba(0,0,0,.45);--hbg:rgba(8,12,16,.9);
+  --ff:'Outfit',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+body.light{
+  --bg:#EEF0F5;--s1:#FFF;--s2:#F4F6FA;--s3:#E8EBF2;
+  --b1:rgba(0,0,0,.06);--b2:rgba(0,0,0,.12);
+  --t1:#0D1117;--t2:#4A5568;--t3:#8A97A8;
+  --focus:#00967A;--fg:rgba(0,150,122,.08);--fb:rgba(0,150,122,.2);
+  --rest:#4A6CF7;--rg:rgba(74,108,247,.08);--rb:rgba(74,108,247,.2);
+  --warn:#C07800;--wg:rgba(192,120,0,.08);--wb:rgba(192,120,0,.2);
+  --err:#D63820;--eg:rgba(214,56,32,.08);--eb:rgba(214,56,32,.2);
+  --sh:rgba(0,0,0,.08);--hbg:rgba(238,240,245,.93);
+}
+/* Transisi smooth — kecuali elemen animasi */
+body,body *{transition:background-color .3s,border-color .3s,color .2s,box-shadow .3s}
+body .no-tr,body .no-tr *,body .conf-piece{transition:none!important}
+body{font-family:var(--ff);background:var(--bg);color:var(--t1);display:flex;flex-direction:column}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+
+/* ANIMATIONS */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideR{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes glow{0%,100%{box-shadow:0 0 6px var(--focus)}50%{box-shadow:0 0 20px var(--focus)}}
+@keyframes warnP{0%,100%{box-shadow:0 0 0 0 var(--wb)}70%{box-shadow:0 0 0 8px transparent}}
+@keyframes tick{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes conf{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(300px) rotate(540deg)}}
+
+/* PAGES */
+.pg{display:none;flex:1;flex-direction:column;overflow:hidden;position:relative;z-index:2;animation:fadeIn .3s}
+.pg.on{display:flex}
+
+/* ══ LOGIN ══ */
+#pg-login{align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(0,212,170,.1),transparent 70%)}
+.lw{width:100%;max-width:380px;animation:fadeUp .45s}
+.logo-box{text-align:center;margin-bottom:26px}
+.logo-icon{width:64px;height:64px;border-radius:20px;margin:0 auto 14px;
+  background:linear-gradient(135deg,var(--focus),var(--rest));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 30px rgba(0,212,170,.25)}
+.logo-icon svg{width:30px;height:30px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.logo-name em{color:var(--focus);font-style:normal}
+.logo-sub{font-size:13px;color:var(--t2);margin-top:4px}
+.lcard{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:24px;box-shadow:0 8px 30px var(--sh)}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.9px;text-transform:uppercase;margin-bottom:7px}
+.fi{width:100%;background:var(--s2);border:1.5px solid var(--b2);border-radius:12px;
+  padding:14px 16px;font-family:var(--ff);font-size:15px;font-weight:500;color:var(--t1);
+  outline:none;margin-bottom:14px;transition:border .2s,box-shadow .2s!important}
+.fi::placeholder{color:var(--t3)}
+.fi:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--fg)}
+.btn-login{width:100%;background:linear-gradient(135deg,var(--focus),#00A88A);
+  border:none;border-radius:12px;padding:16px;font-family:var(--ff);font-size:15px;
+  font-weight:700;color:#fff;cursor:pointer;transition:transform .18s!important}
+.btn-login:active{transform:scale(.97)}
+.lerr{color:var(--err);font-size:12px;text-align:center;margin-top:8px;display:none;font-weight:600}
+
+/* ══ HEADER ══ */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;
+  border-bottom:1px solid var(--b1);flex-shrink:0;
+  background:var(--hbg);backdrop-filter:blur(20px);z-index:20;position:relative}
+.hdr-brand{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.hdr-brand em{color:var(--focus);font-style:normal}
+.hdr-r{display:flex;align-items:center;gap:7px}
+.hdr-user{font-size:12px;font-weight:600;color:var(--t2);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.theme-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--b2);background:var(--s2);
+  cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s!important}
+.theme-btn:active{transform:scale(.85)}
+.ble-pill{display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;cursor:pointer;
+  border:1.5px solid var(--b2);background:var(--s2);transition:all .25s!important}
+.ble-pill.on{border-color:var(--fb);background:var(--fg)}
+.bd{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.bd.on{background:var(--focus);animation:glow 2.5s infinite}
+.bd.scan{background:var(--warn);animation:blink 1s infinite}
+.bl{font-family:var(--fm);font-size:10px;color:var(--t2);font-weight:700}
+.ble-pill.on .bl{color:var(--focus)}
+
+/* ══ TABS ══ */
+.tab-bar{display:flex;padding:9px 14px;gap:4px;flex-shrink:0;border-bottom:1px solid var(--b1)}
+.tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;
+  border:none;background:none;cursor:pointer;border-radius:12px;font-family:var(--ff);transition:all .2s!important}
+.tb svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb span{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.3px}
+.tb.on{background:var(--fg);border:1px solid var(--fb)}
+.tb.on svg{stroke:var(--focus)}.tb.on span{color:var(--focus)}
+.tb:active{transform:scale(.9)}
+
+/* ══ CONTENT ══ */
+.tc{display:none;flex:1;overflow-y:auto;padding:14px 16px 90px;animation:fadeUp .25s}
+.tc.on{display:block}
+
+/* ══ HOME ══ */
+.ble-banner{background:var(--s1);border:1.5px solid var(--b2);border-radius:16px;
+  padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.ble-banner.hidden{display:none}
+.bb-info{flex:1}
+.bb-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.bb-sub{font-size:11px;color:var(--t2)}
+.btn-conn{background:linear-gradient(135deg,var(--focus),#00A88A);border:none;border-radius:10px;
+  padding:10px 16px;font-family:var(--ff);font-size:12px;font-weight:700;color:#fff;
+  cursor:pointer;flex-shrink:0;transition:all .18s!important}
+.btn-conn:active{transform:scale(.94)}
+.btn-conn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.dev-bar{background:var(--fg);border:1.5px solid var(--fb);border-radius:14px;
+  padding:11px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px}
+.dev-bar.on{display:flex}
+.dev-name{font-size:13px;font-weight:700;color:var(--focus);flex:1}
+.dev-sub{font-size:11px;color:var(--t2);margin-top:1px}
+.btn-disc{background:var(--eg);border:1px solid var(--eb);border-radius:8px;
+  padding:6px 11px;font-size:11px;font-weight:700;color:var(--err);cursor:pointer;
+  font-family:var(--ff);transition:all .18s!important}
+.btn-disc:active{transform:scale(.93)}
+
+/* AIR */
+.air-card{border-radius:14px;padding:11px 14px;margin-bottom:12px;
+  background:var(--s1);border:1.5px solid var(--b2);display:flex;align-items:center;gap:12px}
+.air-card.bad{border-color:var(--eb);background:var(--eg);animation:warnP 1.5s infinite}
+.air-card.warn{border-color:var(--wb);background:var(--wg)}
+.air-ico{font-size:22px;flex-shrink:0;line-height:1}
+.air-info{flex:1;min-width:0}
+.air-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px}
+.air-adc{font-family:var(--fm);font-size:15px;font-weight:700;color:var(--t1)}
+.air-st{font-size:11px;font-weight:700;margin-top:1px}
+.air-bar{height:5px;background:var(--b2);border-radius:99px;overflow:hidden;margin-top:6px;width:90px}
+.air-fill{height:100%;border-radius:99px;transition:width .6s,background .4s!important}
+
+/* USER + JARAK */
+.user-card{border-radius:14px;padding:11px 14px;margin-bottom:12px;
+  background:var(--s1);border:1.5px solid var(--b2);display:flex;align-items:center;gap:12px}
+.user-card.absent{border-color:var(--wb);background:var(--wg)}
+.user-dot{width:9px;height:9px;border-radius:50%;background:var(--focus);flex-shrink:0;animation:glow 2.5s infinite}
+.user-card.absent .user-dot{background:var(--warn);animation:blink 1s infinite}
+.user-info{flex:1}
+.user-st{font-size:13px;font-weight:700;color:var(--t1)}
+.user-hint{font-size:11px;color:var(--t2);margin-top:2px}
+.user-cm{font-family:var(--fm);font-size:14px;font-weight:700;color:var(--t2);flex-shrink:0}
+
+/* TIMER */
+.ring-wrap{text-align:center;margin-bottom:12px;position:relative;user-select:none}
+.ring-svg{width:192px;height:192px;transform:rotate(-90deg);overflow:visible}
+.rtrk{fill:none;stroke:var(--s3);stroke-width:10}
+.rprog{fill:none;stroke-width:10;stroke-linecap:round;stroke-dasharray:565;stroke-dashoffset:0}
+.ring-c{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.r-phase{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.r-time{font-family:var(--fm);font-size:40px;font-weight:700;color:var(--t1);letter-spacing:-1px;line-height:1}
+.r-time.tick{animation:tick .4s ease}
+.r-sub{font-size:11px;color:var(--t2);margin-top:4px;font-weight:500;min-height:16px}
+.r-sess{font-family:var(--fm);font-size:10px;color:var(--t3);margin-top:2px}
+
+/* POMO DOTS */
+.pdots{display:flex;justify-content:center;gap:9px;margin-bottom:12px}
+.pdot{width:10px;height:10px;border-radius:50%;border:2px solid var(--b2)}
+.pdot.done{background:var(--focus);border-color:var(--focus)}
+.pdot.active{background:var(--warn);border-color:var(--warn);animation:blink .9s infinite}
+
+/* CTRL — hanya Mulai + Jeda + Reset (TIDAK ADA tombol Lanjut) */
+.ctrl-row{display:flex;gap:9px;margin-bottom:12px}
+.cb{flex:1;border:none;border-radius:14px;padding:14px;font-family:var(--ff);
+  font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:7px;letter-spacing:.2px;transition:all .2s!important}
+.cb svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.cb:active{transform:scale(.95)}
+.cb-start{background:linear-gradient(135deg,var(--focus),#00A88A);color:#fff;box-shadow:0 6px 18px rgba(0,212,170,.2)}
+.cb-pause{background:linear-gradient(135deg,var(--warn),#D07800);color:#fff;box-shadow:0 6px 18px rgba(245,166,35,.18)}
+.cb-reset{background:var(--s2);border:1.5px solid var(--b2);color:var(--t2);flex:none;width:50px;padding:0;justify-content:center}
+.cb:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* MODE ISTIRAHAT - info banner */
+.rest-info{background:var(--rg);border:1px solid var(--rb);border-radius:12px;
+  padding:9px 13px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--rest);
+  display:none;align-items:center;gap:7px}
+.rest-info.on{display:flex}
+
+/* ══ SETTING ══ */
+.sc{background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:16px;margin-bottom:12px}
+.sc-title{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.9px;text-transform:uppercase;
+  margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.sc-title::before{content:'';width:3px;height:13px;border-radius:99px;background:var(--focus);flex-shrink:0}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.tr:last-child{margin-bottom:0}
+.tr-lbl{font-size:13px;font-weight:600;color:var(--t1)}
+.tr-lbl small{display:block;font-size:11px;color:var(--t2);font-weight:400;margin-top:1px}
+.tr-ctrl{display:flex;align-items:center;gap:8px}
+.tr-btn{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--b2);background:var(--s2);
+  color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .18s!important}
+.tr-btn:active{transform:scale(.87);background:var(--fg);border-color:var(--fb)}
+.tr-val{font-family:var(--fm);font-size:18px;font-weight:700;color:var(--t1);width:44px;text-align:center}
+.vol-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.vol-lbl{font-size:13px;font-weight:600;color:var(--t1)}
+.vol-num{font-family:var(--fm);font-size:18px;font-weight:700;color:var(--focus)}
+.vol-trk{position:relative;height:6px;background:var(--s3);border-radius:99px;cursor:pointer;margin-bottom:10px}
+.vol-fill{position:absolute;left:0;top:0;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--focus),var(--rest));transition:width .08s!important}
+.vol-thumb{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.35);transform:translate(-50%,-50%);
+  transition:left .08s!important;cursor:grab}
+.vol-thumb:active{cursor:grabbing;transform:translate(-50%,-50%) scale(1.2)}
+.vpr{display:flex;gap:6px}
+.vp{flex:1;padding:8px 4px;border:1.5px solid var(--b2);background:none;border-radius:9px;
+  font-family:var(--ff);font-size:11px;font-weight:700;color:var(--t3);cursor:pointer;text-align:center;transition:all .18s!important}
+.vp.on{border-color:var(--fb);background:var(--fg);color:var(--focus)}
+.vp:active{transform:scale(.92)}
+.cy-row{display:flex;align-items:center;justify-content:space-between}
+.cy-lbl{font-size:13px;font-weight:600;color:var(--t1)}
+.cy-lbl small{display:block;font-size:11px;color:var(--t2);font-weight:400;margin-top:1px}
+.cy-opts{display:flex;gap:6px}
+.cy-btn{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--b2);
+  background:none;font-family:var(--fm);font-size:13px;font-weight:700;color:var(--t2);
+  cursor:pointer;transition:all .18s!important}
+.cy-btn.on{border-color:var(--fb);background:var(--fg);color:var(--focus)}
+.cy-btn:active{transform:scale(.88)}
+.audio-grid{display:flex;flex-direction:column;gap:6px}
+.audio-row{display:flex;align-items:center;gap:10px;padding:9px 11px;
+  background:var(--s2);border-radius:10px;border:1px solid var(--b1)}
+.audio-num{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--focus);width:36px;flex-shrink:0}
+.audio-txt{font-size:12px;font-weight:600;color:var(--t1);flex:1}
+.audio-play{width:30px;height:30px;border-radius:8px;border:1px solid var(--b2);background:none;
+  color:var(--focus);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;
+  transition:all .18s!important;flex-shrink:0}
+.audio-play:active{transform:scale(.85);background:var(--fg)}
+.audio-play:disabled{opacity:.3;cursor:not-allowed}
+
+/* ══ STATS ══ */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.stat-card{background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:14px;text-align:center}
+.sn{font-family:var(--fm);font-size:28px;font-weight:700;color:var(--focus)}
+.sl{font-size:11px;font-weight:700;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.hist-card{background:var(--s1);border:1px solid var(--b2);border-radius:14px;overflow:hidden}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--b1)}
+.hist-title{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.8px;text-transform:uppercase}
+.btn-csv{background:var(--fg);border:1px solid var(--fb);border-radius:9px;padding:6px 11px;
+  font-size:11px;font-weight:700;color:var(--focus);cursor:pointer;font-family:var(--ff);transition:all .18s!important}
+.btn-csv:active{transform:scale(.93)}
+.hi{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--b1);animation:slideR .3s}
+.hi:last-child{border-bottom:none}
+.hi-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.hi-v{font-size:13px;font-weight:700}
+.hi-ts{font-size:11px;color:var(--t3);margin-top:1px}
+.hi-badge{font-family:var(--fm);font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px}
+.h-empty{text-align:center;padding:28px;color:var(--t3);font-size:13px;font-weight:500}
+
+/* ══ PROFIL ══ */
+.p-hero{text-align:center;padding:18px 0 20px}
+.p-av{width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,var(--focus),var(--rest));
+  display:flex;align-items:center;justify-content:center;margin:0 auto 10px;
+  font-size:26px;font-weight:800;color:#fff;box-shadow:0 8px 20px rgba(0,212,170,.2)}
+.p-name{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.p-sub{font-size:12px;color:var(--t2);margin-top:3px}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;
+  margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+.sec-lbl::before{content:'';width:3px;height:12px;border-radius:99px;background:var(--focus);flex-shrink:0}
+.icard{background:var(--s1);border:1px solid var(--b2);border-radius:14px;overflow:hidden}
+.ir{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--b1)}
+.ir:last-child{border-bottom:none}
+.ik{font-size:13px;font-weight:600;color:var(--t2)}
+.iv{font-family:var(--fm);font-size:11px;font-weight:700;color:var(--t1)}
+.iv.ok{color:var(--focus)}.iv.err{color:var(--err)}.iv.warn{color:var(--warn)}
+.ec{background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:15px;margin-bottom:9px}
+.eg{margin-bottom:12px}.eg:last-child{margin-bottom:0}
+.el{display:block;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px}
+.ei{width:100%;background:var(--s2);border:1.5px solid var(--b2);border-radius:10px;
+  padding:13px 14px;font-family:var(--ff);font-size:14px;font-weight:500;color:var(--t1);
+  outline:none;transition:border .2s,box-shadow .2s!important}
+.ei:focus{border-color:var(--focus);box-shadow:0 0 0 3px var(--fg)}
+.btn-save{width:100%;background:linear-gradient(135deg,var(--focus),#00A88A);border:none;
+  border-radius:11px;padding:14px;font-family:var(--ff);font-size:14px;font-weight:700;
+  color:#fff;cursor:pointer;transition:all .2s!important}
+.btn-save:active{transform:scale(.97)}
+.save-ok{background:var(--fg);border:1px solid var(--fb);border-radius:9px;padding:9px;
+  text-align:center;color:var(--focus);font-size:12px;font-weight:700;margin-top:8px;display:none}
+.btn-danger{width:100%;background:var(--eg);border:1.5px solid var(--eb);border-radius:11px;
+  padding:13px;font-family:var(--ff);font-size:13px;font-weight:700;color:var(--err);
+  cursor:pointer;transition:all .2s!important;margin-top:5px}
+.btn-danger:active{transform:scale(.97)}
+
+/* ══ TOAST — 1 SLOT, tidak bertumpuk ══ */
+.toast-box{position:fixed;top:60px;left:50%;transform:translateX(-50%);
+  z-index:1000;pointer-events:none;width:calc(100% - 32px);max-width:360px}
+.toast{background:var(--s1);border:1px solid var(--b2);border-radius:13px;
+  padding:10px 16px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 24px var(--sh);animation:slideR .3s;pointer-events:auto;
+  transition:opacity .3s!important}
+.toast::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.toast.ok{border-color:var(--fb);color:var(--focus)}
+.toast.err{border-color:var(--eb);color:var(--err)}
+.toast.warn{border-color:var(--wb);color:var(--warn)}
+.toast.info{border-color:var(--rb);color:var(--rest)}
+.toast.hidden{opacity:0;pointer-events:none}
+
+/* CONFETTI */
+.cw{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+.conf-piece{position:absolute;border-radius:2px;animation:conf 1.6s ease forwards}
+</style>
+</head>
+<body>
+<div class="toast-box" id="toast-box"><div class="toast hidden" id="toast">—</div></div>
+<div class="cw" id="cw"></div>
+
+<!-- LOGIN -->
+<div id="pg-login" class="pg on">
+  <div class="lw">
+    <div class="logo-box">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+      </div>
+      <div class="logo-name">Learn<em>Core</em></div>
+      <div class="logo-sub">Pomodoro Focus System · BLE</div>
+    </div>
+    <div class="lcard">
+      <label class="fl">Nama Kamu</label>
+      <input id="inp-name" class="fi" type="text" placeholder="Contoh: Andi" autocomplete="off">
+      <button class="btn-login" onclick="doLogin()">Mulai →</button>
+      <div id="lerr" class="lerr">Nama wajib diisi!</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="pg-app" class="pg">
+  <div class="hdr">
+    <div class="hdr-brand">Learn<em>Core</em></div>
+    <div class="hdr-r">
+      <div class="hdr-user" id="h-name">—</div>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+      <div class="ble-pill" id="ble-pill" onclick="connectBLE()">
+        <div class="bd" id="bd"></div>
+        <span class="bl" id="bl">BLE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tb on" id="tb-home" onclick="goTab('home')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+      <span>Fokus</span>
+    </button>
+    <button class="tb" id="tb-set" onclick="goTab('set')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Setting</span>
+    </button>
+    <button class="tb" id="tb-stat" onclick="goTab('stat')">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Statistik</span>
+    </button>
+    <button class="tb" id="tb-prof" onclick="goTab('prof')">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profil</span>
+    </button>
+  </div>
+
+  <!-- HOME -->
+  <div id="tc-home" class="tc on">
+    <div class="ble-banner" id="ble-banner">
+      <div style="font-size:28px;flex-shrink:0">📶</div>
+      <div class="bb-info">
+        <div class="bb-title">Hubungkan ke ESP32</div>
+        <div class="bb-sub">Pilih <strong>LEARNCORE-POMO</strong></div>
+      </div>
+      <button class="btn-conn" id="btn-conn-m" onclick="connectBLE()">Connect</button>
+    </div>
+    <div class="dev-bar" id="dev-bar">
+      <div style="flex:1">
+        <div class="dev-name" id="dev-name">LEARNCORE-POMO</div>
+        <div class="dev-sub">BLE Terhubung ✓</div>
+      </div>
+      <button class="btn-disc" onclick="disconnectBLE()">Putus</button>
+    </div>
+
+    <!-- USER + JARAK -->
+    <div class="user-card" id="user-card">
+      <div class="user-dot" id="user-dot"></div>
+      <div class="user-info">
+        <div class="user-st" id="user-st">Menunggu sensor...</div>
+        <div class="user-hint" id="user-hint">Threshold: <span id="u-thresh">80</span> cm</div>
+      </div>
+      <div class="user-cm" id="user-cm">— cm</div>
+    </div>
+
+    <!-- AIR -->
+    <div class="air-card" id="air-card">
+      <div class="air-ico" id="air-ico">🌿</div>
+      <div class="air-info">
+        <div class="air-lbl">Kualitas Udara · MQ-135</div>
+        <div class="air-adc" id="air-adc">— ADC</div>
+        <div class="air-st" id="air-st" style="color:var(--focus)">Menunggu...</div>
+        <div class="air-bar"><div class="air-fill" id="air-fill" style="width:0%;background:var(--focus)"></div></div>
+      </div>
+    </div>
+
+    <!-- RING TIMER -->
+    <div class="ring-wrap">
+      <svg class="ring-svg no-tr" viewBox="0 0 200 200">
+        <circle class="rtrk" cx="100" cy="100" r="90"/>
+        <circle class="rprog no-tr" id="rprog" cx="100" cy="100" r="90" stroke="var(--focus)"/>
+      </svg>
+      <div class="ring-c">
+        <div class="r-phase" id="r-phase">SIAP</div>
+        <div class="r-time" id="r-time">25:00</div>
+        <div class="r-sub" id="r-sub">Tekan Mulai</div>
+        <div class="r-sess" id="r-sess">Sesi 1 / 4</div>
+      </div>
+    </div>
+
+    <div class="pdots" id="pdots"></div>
+
+    <!-- INFO MODE ISTIRAHAT -->
+    <div class="rest-info" id="rest-info">
+      <span>😌</span>
+      <span id="rest-info-txt">Mode Istirahat — timer tidak dapat dijeda</span>
+    </div>
+
+    <!-- CTRL: Mulai + Jeda + Reset (TIDAK ADA tombol Lanjut) -->
+    <div class="ctrl-row">
+      <button class="cb cb-start" id="btn-start" onclick="doStart()">
+        <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>Mulai
+      </button>
+      <button class="cb cb-pause" id="btn-pause" onclick="doPauseBtn()" disabled>
+        <svg viewBox="0 0 24 24" id="p-ico"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        <span id="p-lbl">Jeda</span>
+      </button>
+      <button class="cb cb-reset" id="btn-reset" onclick="doReset()" disabled title="Reset">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+        </svg>
+      </button>
+    </div>
+  </div><!-- end tc-home -->
+
+  <!-- SETTING -->
+  <div id="tc-set" class="tc">
+    <div class="sc">
+      <div class="sc-title">Durasi Timer</div>
+      <div class="tr">
+        <div class="tr-lbl">Fokus<small>Kelipatan 5 menit</small></div>
+        <div class="tr-ctrl">
+          <button class="tr-btn" onclick="adjFocus(-5)">−</button>
+          <div class="tr-val" id="tv-focus">25</div>
+          <button class="tr-btn" onclick="adjFocus(5)">+</button>
+        </div>
+      </div>
+      <div class="tr">
+        <div class="tr-lbl">Istirahat Pendek<small>Bebas 1–30 menit</small></div>
+        <div class="tr-ctrl">
+          <button class="tr-btn" onclick="adjShort(-1)">−</button>
+          <div class="tr-val" id="tv-short">5</div>
+          <button class="tr-btn" onclick="adjShort(1)">+</button>
+        </div>
+      </div>
+      <div class="tr">
+        <div class="tr-lbl">Istirahat Panjang<small>Kelipatan 5 menit</small></div>
+        <div class="tr-ctrl">
+          <button class="tr-btn" onclick="adjLong(-5)">−</button>
+          <div class="tr-val" id="tv-long">15</div>
+          <button class="tr-btn" onclick="adjLong(5)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-title">Siklus Pomodoro</div>
+      <div class="cy-row">
+        <div class="cy-lbl">Sesi sebelum istirahat panjang<small>Pilih jumlah sesi</small></div>
+        <div class="cy-opts" id="cy-opts">
+          <button class="cy-btn" onclick="setCycles(2)">2</button>
+          <button class="cy-btn on" onclick="setCycles(4)">4</button>
+          <button class="cy-btn" onclick="setCycles(6)">6</button>
+          <button class="cy-btn" onclick="setCycles(8)">8</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-title">Sensor HC-SR04</div>
+      <div class="tr" style="margin-bottom:0">
+        <div class="tr-lbl">Threshold Hadir<small>User dianggap hadir jika ≤ nilai ini</small></div>
+        <div class="tr-ctrl">
+          <button class="tr-btn" onclick="adjPresence(-10)">−</button>
+          <div class="tr-val" id="tv-pres" style="width:56px;font-size:14px">80cm</div>
+          <button class="tr-btn" onclick="adjPresence(10)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-title">Sensor MQ-135</div>
+      <div class="tr" style="margin-bottom:0">
+        <div class="tr-lbl">Threshold Udara Buruk<small>ADC ≥ nilai ini = peringatan</small></div>
+        <div class="tr-ctrl">
+          <button class="tr-btn" onclick="adjAirBad(-100)">−</button>
+          <div class="tr-val" id="tv-airbad" style="width:58px;font-size:13px">3000</div>
+          <button class="tr-btn" onclick="adjAirBad(100)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-title">Volume DFPlayer</div>
+      <div class="vol-hdr">
+        <div class="vol-lbl">🔊 Volume</div>
+        <div class="vol-num" id="vol-num">20</div>
+      </div>
+      <div class="vol-trk" id="vol-trk">
+        <div class="vol-fill" id="vol-fill" style="width:66.7%"></div>
+        <div class="vol-thumb" id="vol-thumb" style="left:66.7%"></div>
+      </div>
+      <div class="vpr">
+        <button class="vp" onclick="setVol(0)">🔇</button>
+        <button class="vp" onclick="setVol(10)">🔈</button>
+        <button class="vp on" onclick="setVol(20)">🔉</button>
+        <button class="vp" onclick="setVol(30)">🔊</button>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-title">Test Audio</div>
+      <div class="audio-grid">
+        <div class="audio-row"><span class="audio-num">0001</span><span class="audio-txt">Opening / Mulai Fokus</span><button class="audio-play" onclick="testAudio(1)">▶</button></div>
+        <div class="audio-row"><span class="audio-num">0002</span><span class="audio-txt">Waktu Istirahat</span><button class="audio-play" onclick="testAudio(2)">▶</button></div>
+        <div class="audio-row"><span class="audio-num">0003</span><span class="audio-txt">User Pergi / Jeda</span><button class="audio-play" onclick="testAudio(3)">▶</button></div>
+        <div class="audio-row"><span class="audio-num">0004</span><span class="audio-txt">User Kembali</span><button class="audio-play" onclick="testAudio(4)">▶</button></div>
+        <div class="audio-row"><span class="audio-num">0005</span><span class="audio-txt">Kualitas Udara Buruk</span><button class="audio-play" onclick="testAudio(5)">▶</button></div>
+        <div class="audio-row"><span class="audio-num">0006</span><span class="audio-txt">Sesi Selesai Sempurna</span><button class="audio-play" onclick="testAudio(6)">▶</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT -->
+  <div id="tc-stat" class="tc">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="sn" id="st-sesi">0</div><div class="sl">Sesi Selesai</div></div>
+      <div class="stat-card"><div class="sn" id="st-fokus" style="color:var(--rest)">0m</div><div class="sl">Total Fokus</div></div>
+      <div class="stat-card"><div class="sn" id="st-pergi" style="color:var(--warn)">0</div><div class="sl">User Pergi</div></div>
+      <div class="stat-card"><div class="sn" id="st-udara" style="color:var(--err)">0</div><div class="sl">Alert Udara</div></div>
+    </div>
+    <div class="hist-card">
+      <div class="hist-hdr">
+        <div class="hist-title">Riwayat</div>
+        <button class="btn-csv" onclick="exportCSV()">⬇ CSV</button>
+      </div>
+      <div id="hist-list"><div class="h-empty">Belum ada aktivitas</div></div>
+    </div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="tc-prof" class="tc">
+    <div class="p-hero">
+      <div class="p-av" id="p-av">A</div>
+      <div class="p-name" id="p-name">—</div>
+      <div class="p-sub">LearnCore Pomodoro</div>
+    </div>
+    <div class="sec-lbl">Status BLE</div>
+    <div class="icard">
+      <div class="ir"><span class="ik">Perangkat</span><span class="iv" id="pf-dev">—</span></div>
+      <div class="ir"><span class="ik">BLE</span><span class="iv" id="pf-ble">Belum terhubung</span></div>
+      <div class="ir"><span class="ik">DFPlayer</span><span class="iv" id="pf-df">—</span></div>
+      <div class="ir"><span class="ik">Jarak Sekarang</span><span class="iv" id="pf-cm">—</span></div>
+      <div class="ir"><span class="ik">Udara (ADC)</span><span class="iv" id="pf-air">—</span></div>
+    </div>
+    <div class="sec-lbl">Edit Profil</div>
+    <div class="ec"><div class="eg"><label class="el">Nama</label><input id="ef-name" class="ei" type="text"></div></div>
+    <button class="btn-save" onclick="saveProf()">Simpan</button>
+    <div class="save-ok" id="save-ok">✓ Tersimpan!</div>
+    <div class="sec-lbl">Data</div>
+    <button class="btn-danger" onclick="clearAll()">🗑 Hapus Semua Riwayat</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<script>
+// ══ UUID ══
+var SVC  = 'abcdef00-1234-5678-1234-56789abcdef0';
+var CTXU = 'abcdef01-1234-5678-1234-56789abcdef0';
+var CRXU = 'abcdef02-1234-5678-1234-56789abcdef0';
+
+// ══ STATE ══
+var CFG={focusMin:25,shortMin:5,longMin:15,cycles:4,vol:20,presenceCm:80,airBadADC:3000};
+var S={
+  name:'',running:false,paused:false,pausedBySensor:false,
+  phase:'idle',secsLeft:0,sessNow:1,
+  sessDone:0,totalFocusSec:0,pergiCount:0,udaraCount:0,
+  userPresent:true,cm:0,lastADC:0,airBad:false,dfOk:false,
+  hist:[]
+};
+var darkMode=true,bleDevice=null,charRx=null,bleConn=false;
+var localTimer=null,lastPhase='idle';
+
+// ══ STORAGE ══
+function ls(k,v){if(v===undefined){try{return JSON.parse(localStorage.getItem('lc4_'+k));}catch(e){return null;}}localStorage.setItem('lc4_'+k,JSON.stringify(v));}
+
+// ══ TOAST — 1 SLOT ══
+var toastTimer=null;
+function toast(msg,type,dur){
+  var el=document.getElementById('toast');
+  if(toastTimer){clearTimeout(toastTimer);toastTimer=null;}
+  el.textContent=msg;
+  el.className='toast '+(type||'info');
+  toastTimer=setTimeout(function(){el.className='toast hidden';toastTimer=null;},dur||2400);
+}
+
+// ══ CONFETTI ══
+function confetti(){
+  var w=document.getElementById('cw');
+  var clrs=['#00D4AA','#6C8EF5','#F5A623','#F5523C'];
+  for(var i=0;i<20;i++){
+    var p=document.createElement('div');p.className='conf-piece';
+    var sz=6+Math.random()*6;
+    p.style.cssText='left:'+Math.random()*100+'%;top:0;width:'+sz+'px;height:'+sz+'px;background:'+clrs[Math.floor(Math.random()*clrs.length)]+';animation-delay:'+Math.random()*.5+'s;animation-duration:'+(1.2+Math.random()*.8)+'s';
+    w.appendChild(p);setTimeout(function(e){e.remove();},2500,p);
+  }
+}
+
+// ══ THEME ══
+function toggleTheme(){
+  darkMode=!darkMode;
+  document.body.classList.toggle('light',!darkMode);
+  document.getElementById('theme-btn').textContent=darkMode?'🌙':'☀️';
+  ls('theme',darkMode?'dark':'light');
+}
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded',function(){
+  var th=ls('theme');if(th==='light'){darkMode=false;document.body.classList.add('light');document.getElementById('theme-btn').textContent='☀️';}
+  var cfg=ls('cfg');if(cfg)Object.assign(CFG,cfg);
+  var n=ls('name');if(n){S.name=n;showApp();}
+  var h=ls('hist');if(h)S.hist=h;
+  var st=ls('stats');if(st){S.sessDone=st.sessDone||0;S.totalFocusSec=st.totalFocusSec||0;S.pergiCount=st.pergiCount||0;S.udaraCount=st.udaraCount||0;}
+  applyCFGUI();renderDots();initRingUI();setupVolDrag();
+  if(!navigator.bluetooth){var b=document.getElementById('btn-conn-m');if(b){b.disabled=true;b.textContent='Chrome only';}}
+});
+
+// ══ LOGIN ══
+function doLogin(){
+  var n=document.getElementById('inp-name').value.trim();
+  if(!n){document.getElementById('lerr').style.display='block';return;}
+  S.name=n;ls('name',n);showApp();
+}
+function showApp(){
+  document.getElementById('pg-login').classList.remove('on');
+  document.getElementById('pg-app').classList.add('on');
+  document.getElementById('h-name').textContent=S.name;
+  updateProf();
+}
+
+// ══ TABS ══
+function goTab(t){
+  ['home','set','stat','prof'].forEach(function(id){
+    document.getElementById('tc-'+id).classList[id===t?'add':'remove']('on');
+    document.getElementById('tb-'+id).classList[id===t?'add':'remove']('on');
+  });
+  if(t==='stat')renderStat();
+  if(t==='prof')updateProf();
+}
+
+// ══ CONFIG UI ══
+function applyCFGUI(){
+  document.getElementById('tv-focus').textContent=CFG.focusMin;
+  document.getElementById('tv-short').textContent=CFG.shortMin;
+  document.getElementById('tv-long').textContent=CFG.longMin;
+  document.getElementById('tv-pres').textContent=CFG.presenceCm+'cm';
+  document.getElementById('tv-airbad').textContent=CFG.airBadADC;
+  document.getElementById('u-thresh').textContent=CFG.presenceCm;
+  document.querySelectorAll('.cy-btn').forEach(function(b){
+    b.classList[parseInt(b.textContent)===CFG.cycles?'add':'remove']('on');
+  });
+  applyVol(CFG.vol);
+}
+function saveCFG(){ls('cfg',CFG);}
+function sendCFG(){bleSend({cmd:'config',focus:CFG.focusMin,short:CFG.shortMin,long_:CFG.longMin,cycles:CFG.cycles,vol:CFG.vol,presenceCm:CFG.presenceCm,airBadADC:CFG.airBadADC});}
+
+function adjFocus(d){CFG.focusMin=Math.max(5,Math.min(90,Math.round((CFG.focusMin+d)/5)*5));document.getElementById('tv-focus').textContent=CFG.focusMin;saveCFG();sendCFG();if(!S.running)initRingUI();toast('Fokus: '+CFG.focusMin+' menit','info');}
+function adjShort(d){CFG.shortMin=Math.max(1,Math.min(30,CFG.shortMin+d));document.getElementById('tv-short').textContent=CFG.shortMin;saveCFG();sendCFG();toast('Istirahat pendek: '+CFG.shortMin+' menit','info');}
+function adjLong(d){CFG.longMin=Math.max(5,Math.min(60,Math.round((CFG.longMin+d)/5)*5));document.getElementById('tv-long').textContent=CFG.longMin;saveCFG();sendCFG();toast('Istirahat panjang: '+CFG.longMin+' menit','info');}
+function setCycles(n){CFG.cycles=n;saveCFG();sendCFG();applyCFGUI();renderDots();toast('Siklus: '+n+' sesi','info');}
+function adjPresence(d){CFG.presenceCm=Math.max(20,Math.min(300,CFG.presenceCm+d));document.getElementById('tv-pres').textContent=CFG.presenceCm+'cm';document.getElementById('u-thresh').textContent=CFG.presenceCm;saveCFG();sendCFG();toast('Threshold hadir: '+CFG.presenceCm+' cm','info');}
+function adjAirBad(d){CFG.airBadADC=Math.max(500,Math.min(4095,CFG.airBadADC+d));document.getElementById('tv-airbad').textContent=CFG.airBadADC;saveCFG();sendCFG();toast('Threshold udara: '+CFG.airBadADC+' ADC','info');}
+
+// ══ VOLUME ══
+function setupVolDrag(){
+  var trk=document.getElementById('vol-trk'),dragging=false;
+  function calc(e){var r=trk.getBoundingClientRect();var x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;return Math.round(Math.max(0,Math.min(1,x/r.width))*30);}
+  trk.addEventListener('mousedown',function(e){dragging=true;applyVol(calc(e));e.preventDefault();});
+  trk.addEventListener('touchstart',function(e){dragging=true;applyVol(calc(e));e.preventDefault();},{passive:false});
+  document.addEventListener('mousemove',function(e){if(dragging)applyVol(calc(e));});
+  document.addEventListener('touchmove',function(e){if(dragging){applyVol(calc(e));e.preventDefault();}},{passive:false});
+  function end(){if(!dragging)return;dragging=false;bleSend({cmd:'volume',value:CFG.vol});saveCFG();toast('Volume: '+CFG.vol,'info');}
+  document.addEventListener('mouseup',end);document.addEventListener('touchend',end);
+}
+function applyVol(v){
+  CFG.vol=v;
+  var p=(v/30*100)+'%';
+  document.getElementById('vol-fill').style.width=p;
+  document.getElementById('vol-thumb').style.left=p;
+  document.getElementById('vol-num').textContent=v;
+  document.querySelectorAll('.vp').forEach(function(b,i){b.classList[i===(v===0?0:v<=10?1:v<=20?2:3)?'add':'remove']('on');});
+}
+function setVol(v){applyVol(v);bleSend({cmd:'volume',value:v});saveCFG();toast('Volume: '+v,'info');}
+
+// ══ TEST AUDIO ══
+function testAudio(t){
+  if(!bleConn){toast('Hubungkan BLE dulu!','err');return;}
+  bleSend({cmd:'audio',track:t});
+  toast('▶ Test 000'+t+'.mp3','info');
+}
+
+// ══ RING UI ══
+function fmt(s){var m=Math.floor(s/60),sc=s%60;return(m<10?'0':'')+m+':'+(sc<10?'0':'')+sc;}
+function getPhaseTotal(){if(S.phase==='focus')return CFG.focusMin*60;if(S.phase==='short')return CFG.shortMin*60;if(S.phase==='long')return CFG.longMin*60;return CFG.focusMin*60;}
+function getPhaseColor(){if(S.phase==='focus')return'var(--focus)';if(S.phase==='short')return'var(--rest)';if(S.phase==='long')return'var(--warn)';return'var(--focus)';}
+
+function initRingUI(){
+  // Tampilkan sesuai setting saat ini, bukan 00:00
+  document.getElementById('rprog').style.strokeDashoffset='0';
+  document.getElementById('rprog').style.stroke='var(--focus)';
+  document.getElementById('r-phase').textContent='SIAP';
+  document.getElementById('r-time').textContent=fmt(CFG.focusMin*60);
+  document.getElementById('r-sub').textContent='Tekan Mulai';
+  document.getElementById('r-sess').textContent='Sesi 1 / '+CFG.cycles;
+  document.getElementById('rest-info').classList.remove('on');
+}
+
+function renderRing(){
+  var total=getPhaseTotal();
+  var pct=S.secsLeft/total;
+  var offset=(565*(1-pct)).toString();
+  var ring=document.getElementById('rprog');
+  ring.style.strokeDashoffset=offset;
+  ring.style.stroke=getPhaseColor();
+
+  var td=document.getElementById('r-time');
+  td.textContent=fmt(S.secsLeft);
+  td.className='r-time tick';
+  setTimeout(function(){td.className='r-time';},300);
+
+  var labels={focus:'FOKUS',short:'ISTIRAHAT',long:'ISTIRAHAT PANJANG',idle:'SIAP'};
+  document.getElementById('r-phase').textContent=labels[S.phase]||'SIAP';
+  document.getElementById('r-sess').textContent='Sesi '+S.sessNow+' / '+CFG.cycles;
+
+  // Sub text & rest-info
+  var ri=document.getElementById('rest-info');
+  if(S.phase==='short'||S.phase==='long'){
+    ri.classList.add('on');
+    document.getElementById('rest-info-txt').textContent=(S.phase==='short'?'Istirahat pendek':'Istirahat panjang')+' — timer tidak dapat dijeda';
+    document.getElementById('r-sub').textContent=S.phase==='short'?'Istirahat sebentar 😌':'Istirahat panjang 🎉';
+  } else {
+    ri.classList.remove('on');
+    if(!S.running)document.getElementById('r-sub').textContent='Tekan Mulai';
+    else if(S.paused&&S.pausedBySensor)document.getElementById('r-sub').textContent='Dijeda — menunggu sensor 📡';
+    else if(S.paused)document.getElementById('r-sub').textContent='Dijeda ⏸';
+    else document.getElementById('r-sub').textContent='Tetap fokus 💪';
+  }
+}
+
+function renderDots(){
+  var el=document.getElementById('pdots');el.innerHTML='';
+  for(var i=1;i<=CFG.cycles;i++){
+    var d=document.createElement('div');
+    var cls='pdot';
+    if(S.running){if(i<S.sessNow)cls+=' done';else if(i===S.sessNow&&S.phase==='focus')cls+=' active';}
+    d.className=cls;el.appendChild(d);
+  }
+}
+
+// ══ PAUSE BUTTON ══
+// Hanya bisa Jeda (bukan Resume) — Lanjut hanya dari sensor
+function doPauseBtn(){
+  if(!S.running||S.paused)return;
+  if(S.phase!=='focus'){toast('Hanya bisa jeda saat mode Fokus','warn');return;}
+  // Kirim pause ke ESP32
+  bleSend({cmd:'pause'});
+  S.paused=true;S.pausedBySensor=false;
+  clearInterval(localTimer);localTimer=null;
+  document.getElementById('p-ico').innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  document.getElementById('p-lbl').textContent='Jeda';
+  // Tombol jeda jadi disabled saat sudah dijeda (tidak ada tombol lanjut)
+  document.getElementById('btn-pause').disabled=true;
+  renderRing();
+  toast('⏸ Dijeda — lanjut otomatis saat terdeteksi','warn');
+  addHist('⏸','Timer dijeda manual','focus');
+}
+
+// ══ CONTROLS ══
+function doStart(){
+  bleSend({cmd:'start',focus:CFG.focusMin,short:CFG.shortMin,long_:CFG.longMin,cycles:CFG.cycles,vol:CFG.vol,presenceCm:CFG.presenceCm,airBadADC:CFG.airBadADC});
+  S.running=true;S.paused=false;S.pausedBySensor=false;
+  S.phase='focus';S.secsLeft=CFG.focusMin*60;S.sessNow=1;
+  document.getElementById('btn-start').disabled=true;
+  document.getElementById('btn-pause').disabled=false;
+  document.getElementById('btn-reset').disabled=false;
+  document.getElementById('rest-info').classList.remove('on');
+  startLocalTimer();renderRing();renderDots();
+  toast('🚀 Sesi dimulai!','ok');
+  addHist('🚀','Sesi fokus dimulai','focus');
+}
+
+function doReset(){
+  bleSend({cmd:'reset'});
+  clearInterval(localTimer);localTimer=null;
+  S.running=false;S.paused=false;S.pausedBySensor=false;
+  S.phase='idle';S.secsLeft=CFG.focusMin*60;S.sessNow=1;
+  document.getElementById('btn-start').disabled=false;
+  document.getElementById('btn-pause').disabled=true;
+  document.getElementById('btn-reset').disabled=true;
+  document.getElementById('p-ico').innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  document.getElementById('p-lbl').textContent='Jeda';
+  initRingUI();renderDots();
+  toast('↺ Direset','info');
+}
+
+// ══ LOCAL TIMER ══
+function startLocalTimer(){
+  clearInterval(localTimer);
+  localTimer=setInterval(function(){
+    if(!S.running||S.paused)return;
+    // Istirahat tidak bisa dijeda — selalu jalan
+    if(S.secsLeft>0){
+      S.secsLeft--;
+      if(S.phase==='focus')S.totalFocusSec++;
+      renderRing();
+    }
+  },1000);
+}
+
+// ══ HANDLE BLE DATA ══
+function handleBLE(d){
+  if(d.type==='status')       syncStatus(d);
+  else if(d.type==='sensor')  syncSensor(d);
+  else if(d.type==='user')    handleUser(d);
+  else if(d.type==='air')     handleAir(d.adc,d.airBad);
+}
+
+function syncStatus(d){
+  var phaseChanged=(d.phase!==S.phase||d.sess!==S.sessNow);
+  S.running=d.running; S.paused=d.paused; S.pausedBySensor=d.pausedBySensor||false;
+  S.phase=d.phase; S.secsLeft=d.secsLeft; S.sessNow=d.sess;
+  if(d.adc!==undefined)handleAir(d.adc,d.airBad);
+  if(d.user!==undefined)updateUserUI(d.user,S.cm);
+  if(d.cm!==undefined){S.cm=d.cm;updateUserUI(S.userPresent,d.cm);}
+  if(d.dfOk!==undefined){document.getElementById('pf-df').textContent=d.dfOk?'OK':'Gagal';document.getElementById('pf-df').className='iv '+(d.dfOk?'ok':'err');}
+  if(d.focusMin){CFG.focusMin=d.focusMin;document.getElementById('tv-focus').textContent=d.focusMin;}
+  if(d.shortMin){CFG.shortMin=d.shortMin;document.getElementById('tv-short').textContent=d.shortMin;}
+  if(d.longMin){CFG.longMin=d.longMin;document.getElementById('tv-long').textContent=d.longMin;}
+  if(d.vol!==undefined)applyVol(d.vol);
+  if(d.presenceCm){CFG.presenceCm=d.presenceCm;document.getElementById('tv-pres').textContent=d.presenceCm+'cm';document.getElementById('u-thresh').textContent=d.presenceCm;}
+  if(d.airBadADC){CFG.airBadADC=d.airBadADC;document.getElementById('tv-airbad').textContent=d.airBadADC;}
+
+  // Deteksi sesi selesai
+  if(phaseChanged&&d.phase==='short'&&lastPhase==='focus'){
+    S.sessDone++;saveStats();addHist('✅','Sesi fokus selesai → istirahat pendek','focus');
+  }
+  if(phaseChanged&&d.phase==='long'&&lastPhase==='focus'){
+    S.sessDone++;saveStats();confetti();
+    addHist('🎉','Semua siklus selesai! Istirahat panjang','focus');
+    toast('🎉 Semua siklus selesai!','ok',4000);
+  }
+  lastPhase=d.phase;
+
+  // Sync button states
+  document.getElementById('btn-start').disabled=d.running;
+  document.getElementById('btn-reset').disabled=!d.running&&d.phase==='idle';
+
+  // Tombol Jeda: hanya aktif saat mode fokus, tidak paused
+  var canPause = d.running && !d.paused && d.phase==='focus';
+  document.getElementById('btn-pause').disabled=!canPause;
+
+  if(d.running&&!d.paused){if(!localTimer)startLocalTimer();}
+  else{clearInterval(localTimer);localTimer=null;}
+
+  renderRing();renderDots();
+}
+
+function syncSensor(d){
+  if(d.cm!==undefined){S.cm=d.cm;updateUserUI(d.user!==undefined?d.user:S.userPresent,d.cm);}
+  if(d.adc!==undefined)handleAir(d.adc,d.airBad);
+}
+
+function handleUser(d){
+  S.userPresent=d.present;
+  updateUserUI(d.present,d.cm||S.cm);
+  if(!d.present){
+    S.pergiCount++;saveStats();
+    addHist('🚶','User pergi — timer dijeda otomatis','user');
+    toast('🚶 Tidak terdeteksi — timer dijeda','warn');
+    // Sync UI pause
+    if(S.running&&!S.paused&&S.phase==='focus'){
+      S.paused=true;S.pausedBySensor=true;
+      clearInterval(localTimer);localTimer=null;
+      document.getElementById('btn-pause').disabled=true;
+      renderRing();
+    }
+  } else {
+    addHist('🙋','User terdeteksi — timer dilanjutkan otomatis','user');
+    toast('🙋 Terdeteksi! Timer dilanjutkan','ok');
+    // Sync UI resume
+    if(S.running&&S.paused&&S.pausedBySensor&&S.phase==='focus'){
+      S.paused=false;S.pausedBySensor=false;
+      document.getElementById('btn-pause').disabled=false;
+      startLocalTimer();renderRing();
+    }
+  }
+}
+
+function handleAir(adc,bad){
+  S.lastADC=adc;S.airBad=bad;
+  document.getElementById('air-adc').textContent=adc+' ADC';
+  document.getElementById('pf-air').textContent=adc+' ADC';
+  var pct=Math.min(100,(adc/4095)*100);
+  var fill=document.getElementById('air-fill');fill.style.width=pct+'%';
+  var card=document.getElementById('air-card');
+  if(bad||adc>=CFG.airBadADC){
+    card.className='air-card bad';
+    document.getElementById('air-ico').textContent='⚠️';
+    document.getElementById('air-st').textContent='Udara BURUK — buka jendela!';
+    document.getElementById('air-st').style.color='var(--err)';
+    fill.style.background='var(--err)';
+    if(bad&&S.lastADC!==adc){S.udaraCount++;saveStats();addHist('⚠️','Alert udara buruk: '+adc+' ADC','alert');}
+  } else if(adc>=CFG.airBadADC*0.85){
+    card.className='air-card warn';
+    document.getElementById('air-ico').textContent='💨';
+    document.getElementById('air-st').textContent='Udara kurang baik';
+    document.getElementById('air-st').style.color='var(--warn)';
+    fill.style.background='var(--warn)';
+  } else {
+    card.className='air-card';
+    document.getElementById('air-ico').textContent='🌿';
+    document.getElementById('air-st').textContent='Udara bersih ✓';
+    document.getElementById('air-st').style.color='var(--focus)';
+    fill.style.background='var(--focus)';
+  }
+}
+
+function updateUserUI(present,cm){
+  S.userPresent=present;if(cm!==undefined)S.cm=cm;
+  var card=document.getElementById('user-card');
+  var dot=document.getElementById('user-dot');
+  var st=document.getElementById('user-st');
+  var cmEl=document.getElementById('user-cm');
+  document.getElementById('pf-cm').textContent=cm!==undefined?cm+' cm':'—';
+  cmEl.textContent=(cm!==undefined&&cm<900)?cm+' cm':'— cm';
+  if(present){
+    card.className='user-card';dot.className='user-dot';
+    st.textContent='Terdeteksi ✓ (≤ '+CFG.presenceCm+' cm)';
+  } else {
+    card.className='user-card absent';dot.className='user-dot';
+    st.textContent='Tidak terdeteksi (> '+CFG.presenceCm+' cm)';
+  }
+}
+
+// ══ BLE ══
+async function connectBLE(){
+  if(!navigator.bluetooth){toast('Gunakan Chrome Android!','err');return;}
+  if(bleConn){toast('Sudah terhubung','info');return;}
+  setBleUI('scan');
+  try{
+    bleDevice=await navigator.bluetooth.requestDevice({filters:[{name:'LEARNCORE-POMO'}],optionalServices:[SVC]});
+    bleDevice.addEventListener('gattserverdisconnected',onDisconn);
+    toast('Menghubungkan...','info',1800);
+    var srv=await bleDevice.gatt.connect();
+    var svc=await srv.getPrimaryService(SVC);
+    var cTx=await svc.getCharacteristic(CTXU);
+    await cTx.startNotifications();
+    cTx.addEventListener('characteristicvaluechanged',function(e){
+      try{var d=JSON.parse(new TextDecoder().decode(e.target.value));handleBLE(d);}catch(x){console.warn('[BLE]',x);}
+    });
+    charRx=await svc.getCharacteristic(CRXU);
+    bleConn=true;setBleUI('on');
+    document.getElementById('dev-name').textContent=bleDevice.name;
+    document.getElementById('pf-dev').textContent=bleDevice.name;
+    document.getElementById('pf-ble').textContent='Terhubung';document.getElementById('pf-ble').className='iv ok';
+    toast('✅ Terhubung ke '+bleDevice.name,'ok');
+    sendCFG();
+  }catch(e){
+    if(e.name!=='NotFoundError')toast('Gagal: '+e.message,'err');
+    setBleUI('off');
+  }
+}
+function onDisconn(){
+  bleConn=false;charRx=null;setBleUI('off');
+  toast('⚠ BLE terputus','warn');
+  document.getElementById('pf-ble').textContent='Terputus';document.getElementById('pf-ble').className='iv err';
+  if(bleDevice&&bleDevice.gatt)setTimeout(function(){if(!bleConn&&bleDevice)bleDevice.gatt.connect().catch(function(){});},3000);
+}
+async function disconnectBLE(){
+  if(bleDevice&&bleDevice.gatt&&bleDevice.gatt.connected)bleDevice.gatt.disconnect();
+  bleConn=false;charRx=null;setBleUI('off');toast('BLE diputus','info');
+}
+async function bleSend(obj){
+  if(!bleConn||!charRx)return;
+  try{await charRx.writeValue(new TextEncoder().encode(JSON.stringify(obj)));}
+  catch(e){if(e.name==='NetworkError'||e.name==='InvalidStateError'){bleConn=false;setBleUI('off');}}
+}
+function setBleUI(s){
+  var pill=document.getElementById('ble-pill'),dot=document.getElementById('bd'),lbl=document.getElementById('bl');
+  var banner=document.getElementById('ble-banner'),dev=document.getElementById('dev-bar');
+  if(s==='on'){pill.className='ble-pill on';dot.className='bd on';lbl.textContent='Konek';banner.classList.add('hidden');dev.classList.add('on');}
+  else if(s==='scan'){pill.className='ble-pill';dot.className='bd scan';lbl.textContent='Scan...';}
+  else{pill.className='ble-pill';dot.className='bd';lbl.textContent='BLE';banner.classList.remove('hidden');dev.classList.remove('on');}
+}
+
+// ══ STATS & HISTORY ══
+function addHist(ico,msg,type){
+  var ts=new Date().toLocaleTimeString('id-ID');
+  S.hist.unshift({ico:ico,msg:msg,type:type,ts:ts});
+  if(S.hist.length>200)S.hist=S.hist.slice(0,200);
+  ls('hist',S.hist);
+}
+function saveStats(){ls('stats',{sessDone:S.sessDone,totalFocusSec:S.totalFocusSec,pergiCount:S.pergiCount,udaraCount:S.udaraCount});}
+function renderStat(){
+  document.getElementById('st-sesi').textContent=S.sessDone;
+  document.getElementById('st-fokus').textContent=Math.round(S.totalFocusSec/60)+'m';
+  document.getElementById('st-pergi').textContent=S.pergiCount;
+  document.getElementById('st-udara').textContent=S.udaraCount;
+  var el=document.getElementById('hist-list');
+  if(!S.hist.length){el.innerHTML='<div class="h-empty">Belum ada aktivitas</div>';return;}
+  var tc={focus:'var(--focus)',user:'var(--warn)',alert:'var(--err)',system:'var(--rest)'};
+  el.innerHTML=S.hist.slice(0,60).map(function(h){var c=tc[h.type]||'var(--t3)';
+    return '<div class="hi"><div class="hi-ico" style="background:'+c+'18">'+h.ico+'</div>'+
+      '<div style="flex:1;min-width:0"><div class="hi-v" style="color:'+c+'">'+h.msg+'</div><div class="hi-ts">'+h.ts+'</div></div>'+
+      '<div class="hi-badge" style="background:'+c+'18;color:'+c+'">'+h.type+'</div></div>';}).join('');
+}
+
+// ══ PROFIL ══
+function updateProf(){
+  document.getElementById('p-av').textContent=(S.name||'A').charAt(0).toUpperCase();
+  document.getElementById('p-name').textContent=S.name||'—';
+  document.getElementById('ef-name').value=S.name;
+}
+function saveProf(){
+  var n=document.getElementById('ef-name').value.trim();
+  if(!n){toast('Nama wajib diisi!','err');return;}
+  S.name=n;ls('name',n);updateProf();document.getElementById('h-name').textContent=n;
+  var ok=document.getElementById('save-ok');ok.style.display='block';
+  setTimeout(function(){ok.style.display='none';},2000);
+}
+function exportCSV(){
+  if(!S.hist.length){toast('Belum ada data','err');return;}
+  var rows=[['Nama','Event','Type','Waktu']];
+  S.hist.forEach(function(h){rows.push([S.name,h.msg,h.type,h.ts]);});
+  var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='learncore_'+S.name+'_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();toast('📥 CSV didownload!','ok');
+}
+function clearAll(){
+  if(!confirm('Hapus semua riwayat?'))return;
+  S.hist=[];S.sessDone=0;S.totalFocusSec=0;S.pergiCount=0;S.udaraCount=0;
+  ls('hist',[]);saveStats();toast('🗑 Data dihapus','info');
+}
+</script>
+</body>
+</html>
